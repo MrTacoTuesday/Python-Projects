@@ -1,4 +1,4 @@
 {
-	"python.analysis.typeCheckingMode": "standard",
-	"python.analysis.languageServerMode": "full"
+	"python.analysis.languageServerMode": "full",
+	"python.analysis.typeCheckingMode": "standard"
 }

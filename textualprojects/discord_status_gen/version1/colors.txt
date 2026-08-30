@@ -1,0 +1,16 @@
+red
+orange
+yellow
+green
+blue
+indigo
+violet
+white
+black
+gray
+magenta
+peach
+pink
+brown
+transparent
+opaque

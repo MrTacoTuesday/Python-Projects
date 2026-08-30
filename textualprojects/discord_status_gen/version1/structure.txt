@@ -1,0 +1,20 @@
+{s} {a} and {a} on {s} {t}
+{s} is {c} {t}
+{s} just {a} {t}
+{s} {a} {t}
+{s} {a} {t}
+{s} {a} {t}
+{s} and {s} found out that {s} might have {a} {t}
+{s} and {s} found out {t} that {s} might have {a} {t}
+{s} found out {t} that {s} {a}
+{s} {a} and {a} on {s}
+{s} is {c}
+{s} just {a}
+{s} {a}
+{s} {a}
+{s} {a}
+{s} {a}
+{s} {a}
+{s} and {s} found out {t} that {s} might have {a}
+{s} and {s} found out that {s} might have {a}
+{s} found out that {s} {a}

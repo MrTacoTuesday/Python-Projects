@@ -1,0 +1,98 @@
+{Wed Jan 22 03:59:38 2025} Flushing DEBUG logs to debugger_flush_test.log...
+>> 'foo' namespace
+| execution log <0> file <c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py>
+| | <foo:bar 87>
+| | <foo:bar-modified 2767>
+| execution log <1> file <c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py>
+| | <foo:bar 87>
+| | <foo:bar-modified 2767>
+Operation Complete
+
+{Wed Jan 22 03:59:38 2025} Flushing DEBUG logs to debugger_flush_test.log...
+>> 'foo' namespace
+| execution log <0> file <c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py>
+| execution log <1> file <c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py>
+| execution log <2> file <c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py>
+| | <foo:bar 87>
+| | <foo:bar-modified 2767>
+Operation Complete
+
+{Wed Jan 22 03:59:38 2025} Flushing DEBUG logs to debugger_flush_test.log...
+>> 'foo' namespace
+Operation Complete
+
+{Wed Jan 22 04:00:09 2025} Flushing DEBUG logs to debugger_flush_test.log...
+>> 'foo' namespace
+| execution log <0> file <c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py>
+| | <'foo:bar 87'>
+| | <'foo:bar-modified 2767'>
+| execution log <1> file <c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py>
+| | <'foo:bar 87'>
+| | <'foo:bar-modified 2767'>
+Operation Complete
+
+{Wed Jan 22 04:00:09 2025} Flushing DEBUG logs to debugger_flush_test.log...
+>> 'foo' namespace
+| execution log <0> file <c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py>
+| execution log <1> file <c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py>
+| execution log <2> file <c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py>
+| | <'foo:bar 87'>
+| | <'foo:bar-modified 2767'>
+Operation Complete
+
+{Wed Jan 22 04:00:09 2025} Flushing DEBUG logs to debugger_flush_test.log...
+>> 'foo' namespace
+Operation Complete
+
+{Wed Jan 22 04:00:54 2025} Flushing DEBUG logs to debugger_flush_test.log...
+>> 'foo' namespace
+| execution log <0> file <c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py>
+| | <'foo:bar' 87>
+| | <'foo:bar-modified' 2767>
+| execution log <1> file <c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py>
+| | <'foo:bar' 87>
+| | <'foo:bar-modified' 2767>
+Operation Complete
+
+{Wed Jan 22 04:00:54 2025} Flushing DEBUG logs to debugger_flush_test.log...
+>> 'foo' namespace
+| execution log <0> file <c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py>
+| execution log <1> file <c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py>
+| execution log <2> file <c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py>
+| | <'foo:bar' 87>
+| | <'foo:bar-modified' 2767>
+Operation Complete
+
+{Wed Jan 22 04:00:54 2025} Flushing DEBUG logs to debugger_flush_test.log...
+>> 'foo' namespace
+Operation Complete
+
+<c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py> {Wed Jan 22 04:01:39 2025} DEBUG:: 'debug:[foo].node-id' 1
+<c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py> {Wed Jan 22 04:01:39 2025} DEBUG:: 'foo:bar' 87
+<c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py> {Wed Jan 22 04:01:39 2025} DEBUG:: 'foo:bar-modified' 2767
+{Wed Jan 22 04:01:39 2025} Flushing DEBUG logs to debugger_flush_test.log...
+>> 'foo' namespace
+| execution log <0> file <c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py>
+| | <'foo:bar' 87>
+| | <'foo:bar-modified' 2767>
+| execution log <1> file <c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py>
+| | <'foo:bar' 87>
+| | <'foo:bar-modified' 2767>
+Operation Complete
+
+<c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py> {Wed Jan 22 04:01:39 2025} DEBUG:: 'debug:[foo].node-id' 2
+<c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py> {Wed Jan 22 04:01:39 2025} DEBUG:: 'foo:bar' 87
+<c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py> {Wed Jan 22 04:01:39 2025} DEBUG:: 'foo:bar-modified' 2767
+{Wed Jan 22 04:01:39 2025} Flushing DEBUG logs to debugger_flush_test.log...
+>> 'foo' namespace
+| execution log <0> file <c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py>
+| execution log <1> file <c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py>
+| execution log <2> file <c:\Users\w6759\OneDrive\Desktop\Status Time\version2\Debugger.py>
+| | <'foo:bar' 87>
+| | <'foo:bar-modified' 2767>
+Operation Complete
+
+{Wed Jan 22 04:01:39 2025} Flushing DEBUG logs to debugger_flush_test.log...
+>> 'foo' namespace
+Operation Complete
+

@@ -1,0 +1,109 @@
+|||||
+Minecraft Addition Ideas:
+
+Farmland Slab (Block)
+{Would then require slabbed dirt}
+
+Dirt Slab (Block)
+{leads to Slabbed Grass Block, Slabbed Coarse Dirt}
+
+Grass Slab (Block)
+{leads to Slabbed Grass Path Block, Snowy variant}
+
+Grass Path Slab (Block)
+
+
+!! Terrain generation could use slabbed dirt for a gentler slope
+
+!! Dirt slabs would not drop the block, but rather 2 dirt clumps (Dirt),
+!! Regular dirt and grass would drop 4 dirt clumps
+
+!! 4 dirt clumps create 1 dirt block
+
+!! All stone tools can be made with the cobble instead of the block
+!! Durability of stone tools should be lowered (1/4th maybe)
+!! What about copper tools? Well copper is soft so they used a mix:
+!! 88% copper + 11% tin = bronze, 8:1 ratio.
+!! bronze tools should have slightly higher durability than old stone tools
+?? Bronze Bucket
+?? Wood bucket
+|||||
+
+
+Armor[Bronze Boots]
+Armor[Bronze Chestplate]
+Armor[Bronze Helmet]
+Armor[Bronze Leggings]
+
+Block[Bronze Block]
+Block[Deepslate Cobble Block]
+Block[Dirt Slab]
+Block[Farmland Slab]
+Block[Grass Slab]
+Block[Grass Path Slab]
+Block[Raw Bronze Block]
+Block[Raw Tin Block]
+Block[Tin Block]
+Block[Tin Ore]
+
+Craft[2x Stone Cobble + 2x Andesite] -> 1x Andesite Block
+Craft[4x Blackstone Cobble] -> 1x Blackstone
+Craft[3x Bronze Ingot + 2x Stick] -> 1x Bronze Axe
+Craft[4x Bronze Ingot] -> 1x Bronze Boots
+Craft[8x Bronze Ingot] -> 1x Bronze Chestplate
+Craft[5x Bronze Ingot] -> 1x Bronze Helmet
+Craft[2x Bronze Ingot + 2x Stick] -> 1x Bronze Hoe
+Craft[7x Bronze Ingot] -> 1x Bronze Leggings
+Craft[3x Bronze Ingot + 2x Stick] -> 1x Bronze Pickaxe
+Craft[1x Bronze Ingot + 2x Stick] -> 1x Bronze Shovel
+Craft[2x Bronze Ingot + 1x Stick] -> 1x Bronze Sword
+Craft[4x Deepslate Cobble] -> 1x Deepslate Cobble Block
+Craft[2x Stone Cobble + 2x Diorite] -> 1x Diorite Block
+Craft[2x Stone Cobble + 2x Granite] -> 1x Granite Block
+Craft[1x Raw Tin + 8x Raw Copper] -> 9x Raw Bronze
+Craft[4x Stone Cobble] -> 1x Stone Cobble Block
+
+Destroy[Andesite Block] -> 1-3x Andesite
+Destroy[Andesite Slab] -> 0-2x Andesite
+Destroy[Blackstone] -> 3-5x Blackstone Cobble
+Destroy[Deepslate] -> 3-5x Deepslate Cobble
+Destroy[Deepslate Slab] -> 1-3x Deepslate Cobble
+Destroy[Diorite Block] -> 1-3x Diorite
+Destroy[Diorite Slab] -> 0-2x Diorite
+Destroy[Dirt Block] -> 3-5x Dirt
+Destroy[Dirt Slab] -> 1-2x Dirt
+Destroy[Farmland Block] -> 3-5x Dirt
+Destroy[Farmland Slab] -> 1-3x Dirt
+Destroy[Granite Block] -> 1-3x Granite
+Destroy[Granite Slab] -> 0-2x Granite
+Destroy[Grass Block] -> 3-5x Dirt
+Destroy[Grass Slab] -> 1-3x Dirt
+Destroy[Grass Path Block] -> 3-5x Dirt
+Destroy[Grass Path Slab] -> 1-3x Dirt
+Destroy[Stone] -> 3-5x Stone Cobble
+Destroy[Stone Slab] -> 1-3x Stone Cobble
+Destroy[Tin Ore] -> 1x Raw Tin
+
+Item[Andesite]
+Item[Blackstone Cobble]
+Item[Bronze Ingot]
+Item[Deepslate Cobble]
+Item[Diorite]
+Item[Dirt]
+Item[Granite]
+Item[Raw Bronze]
+Item[Raw Tin]
+Item[Stone Cobble]
+Item[Tin Ingot]
+
+ItemTag[stone_tool_materials] -> Stone Cobble, Deepslate Cobble, Blackstone Cobble
+
+Locale[block.cobblestone.name] -> Stone Cobble Block
+
+Smelt[1x Raw Tin] -> 1x Tin Ingot
+Smelt[1x Raw Bronze] -> 1x Bronze Ingot
+
+Tool[Bronze Axe]
+Tool[Bronze Hoe]
+Tool[Bronze Shovel]
+Tool[Bronze Sword]

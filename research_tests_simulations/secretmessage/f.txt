@@ -1,0 +1,3 @@
+base=64
+result=128
+Can Dogs Really Eat Spoiled Cabbage??
