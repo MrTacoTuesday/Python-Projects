@@ -1,15 +1,15 @@
 from math import floor
 
 if __name__ == "__main__":
-    from hasher import Hasher
+    from noise.hashrandom import SeededHashRandomizer, HasherMode
 else:
-    from .hasher import Hasher
+    from .hashrandom import SeededHashRandomizer, HasherMode
 
 
 class perlin:
 
     def __init__(self, seed: int) -> None:
-        self._hasher = Hasher(seed, "reset")
+        self._hasher = SeededHashRandomizer(seed, HasherMode.reset)
 
     @property
     def seed(self) -> int:
@@ -77,6 +77,7 @@ class perlin:
         amplitude = 2
         weight = 0
 
+        #optimize to hardcoded versions
         match len(dims):
             case 1:
                 func = self.perlin_1d

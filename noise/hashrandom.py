@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Any, Literal, TypeAlias, cast
 
 UINT_64_MAX = 0xFFFF_FFFF_FFFF_FFFF
@@ -21,10 +22,14 @@ SALT = (
     0xE9B710875FE1CEE,
 )
 
-HasherMode: TypeAlias = Literal['reset', 'preserve', 'merge']
-class Hasher:
+class HasherMode(Enum):
+    reset = 0
+    preserve = 1
+    merge = 2
 
-    def __init__(self, seed: int = 0, mode: HasherMode = 'merge') -> None:
+class SeededHashRandomizer:
+
+    def __init__(self, seed: int = 0, mode: HasherMode = HasherMode.merge) -> None:
         self.seed = seed
         self._digest = self.seed
         self._k = 0
@@ -36,16 +41,16 @@ class Hasher:
 
     @property
     def mode(self) -> HasherMode:
-        return cast(HasherMode, self._mode)
+        return self._mode
     
-    def deepcopy(self) -> Hasher:
-        h = Hasher(self.seed)
+    def deepcopy(self) -> SeededHashRandomizer:
+        h = SeededHashRandomizer(self.seed)
         h._digest = self._digest
         h._k = self._k
         h._mode = self._mode
         return h
     
-    def copy(self) -> Hasher:
+    def copy(self) -> SeededHashRandomizer:
         return self.deepcopy()
 
     def _prepare(self, o: Any) -> int:
@@ -69,7 +74,7 @@ class Hasher:
     def _salt(self, i: int) -> int:
         return SALT[(i + self._k) & 0xF]
 
-    def combine(self, *args: Any) -> Hasher:
+    def combine(self, *args: Any) -> SeededHashRandomizer:
         h = self._digest
         for o in args:
             o = self._prepare(o)
@@ -120,19 +125,19 @@ class Hasher:
         h &= UINT_64_MAX
 
         match self._mode:
-            case 'merge':
+            case HasherMode.merge:
                 self.seed = h
                 self._digest = h
                 self._k = 0
-            case 'reset':
+            case HasherMode.reset:
                 self._digest = self.seed
                 self._k = 0
-            case 'preserve' | _:
+            case HasherMode.preserve | _:
                 pass
         
         return HashDigest(_value=h)
     
-    def nextstate(self) -> Hasher:
+    def nextstate(self) -> SeededHashRandomizer:
         self.digest()
         return self
 
@@ -158,6 +163,9 @@ class HashDigest:
 
     def __float__(self) -> float:
         return (self._value & UINT_64_MAX) / UINT_64_MAX
+
+    def normalize(self) -> float:
+        return self._value
 
     def __str__(self) -> str:
         return hex(self._value)
