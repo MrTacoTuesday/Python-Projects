@@ -7,11 +7,6 @@ from typing import Any, ClassVar, Iterable, SupportsIndex
 from typing_extensions import Self
 
 DEFAULT_OBJECT_DIRECTORY = frozenset(type.__dir__(object))
-DEFAULT_TYPE_DIRECTORY = frozenset(type.__dir__(type)) - DEFAULT_OBJECT_DIRECTORY
-class _provider:
-    ...
-DEFAULT_CLASS_DIRECTORY = frozenset(type.__dir__(_provider)) - DEFAULT_OBJECT_DIRECTORY - DEFAULT_TYPE_DIRECTORY
-del _provider
 
 def debug(
     *values: object,
@@ -24,8 +19,6 @@ def debug(
         print(*values, sep=sep, end=end, file=file, flush=flush)
     else:
         ...
-
-debug(DEFAULT_CLASS_DIRECTORY)
 
 class Typecode(bytes, ReprEnum):
     Bytes = b'\x00'
