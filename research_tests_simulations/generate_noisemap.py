@@ -127,8 +127,8 @@ EIGHTY_THIRTEENTHS = 80/13
 def Continentalness(seed: int = 0, x_offset: int = 0, y_offset: int = 0) -> NoiseMachine:
     return NoiseMachine(
         seed=seed,
-        scale=66.87,
-        persistance=0.56001511,
+        scale=334.7,
+        persistance=0.28000755,
         lacunarity=3.69743099,
         octaves=4,
         base_x_offset=-seed & SALT[3] ^ 0x34ef0a + x_offset,
@@ -362,7 +362,7 @@ TESTING_SEED = (
 if __name__ == "__main__":
     continentalness = Continentalness(seed=TESTING_SEED)
     print(continentalness)
-    CHUNK_SIZE = 512
+    CHUNK_SIZE = 1024
     CHUNKS = (1,1)
     MODE: GENERATOR_MODE = "GRAYSCALE"
     FILENAME_BASE = get_datetime_formatted() + '_x%d_y%d'
