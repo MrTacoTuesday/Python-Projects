@@ -1,10 +1,12 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections.abc import Buffer
 from ctypes import c_double
 from enum import ReprEnum
 from types import BuiltinFunctionType, BuiltinMethodType, ClassMethodDescriptorType, FunctionType, GetSetDescriptorType, MappingProxyType, MemberDescriptorType, MethodDescriptorType, MethodType, MethodWrapperType, WrapperDescriptorType
-from typing import Any, ClassVar, Iterable, SupportsIndex
+from typing import Any, ClassVar, Iterable
 from typing_extensions import Self
+
+__all__ = ['encode']
 
 DEFAULT_OBJECT_DIRECTORY = frozenset(type.__dir__(object))
 
@@ -33,6 +35,18 @@ class Typecode(bytes, ReprEnum):
     Type = b'\x09'
     Object = b'\x0a'
 
+class PythonBaseTypes(set[type], ReprEnum):
+    Bytes = {bytes, bytearray, memoryview}
+    Integer = {int, bool}
+    FloatingPoint = {float,}
+    String = {str,}
+    Collection = {list, tuple, set, frozenset}
+    Mapping = {dict, MappingProxyType}
+    Function = {FunctionType, MethodType, BuiltinFunctionType, 
+                BuiltinMethodType, WrapperDescriptorType, MethodDescriptorType, 
+                MethodWrapperType, ClassMethodDescriptorType, GetSetDescriptorType, MemberDescriptorType}
+    Object = {type, object, None, Any}
+
 
 class _encodes(ABC):
     def encode(self) -> bytes:
@@ -45,8 +59,12 @@ def _encode(t: Typecode, d: Buffer) -> bytes:
     lb = (l.bit_length()+7)>>3
     return t + lb.to_bytes() + l.to_bytes(lb) + d
 
-def _encode_generic(o: Any) -> bytes:
-    return Object.parse(o).encode()
+def encode(*args: Any, **kwargs) -> bytes:
+    if args and kwargs:
+        data = (args, kwargs)
+    else:
+        data = kwargs or args
+    return Object.parse(data).encode()
 
 class Bytes(bytes, _encodes): 
     def encode(self) -> bytes:
@@ -104,27 +122,25 @@ class Function(_encodes):
     def __repr__(self) -> str:
         return repr(self.func)
 class Object(_encodes):
+    _cache_: ClassVar[dict[Any, bytes]] = {}
     @classmethod
     def parse(cls, o: Any) -> _encodes:
         if isinstance(o, _encodes):
             return o
         tp = type(o)
-        if tp in (bytes, memoryview, bytearray):
+        if tp in PythonBaseTypes.Bytes:
             return Bytes(o)
-        if tp in (int, bool):
+        if tp in PythonBaseTypes.Integer:
             return Integer(o)
-        if tp in (float,):
+        if tp in PythonBaseTypes.FloatingPoint:
             return FloatingPoint(o)
-        if tp in (str,):
+        if tp in PythonBaseTypes.String:
             return String(o)
-        if tp in (tuple, list, set, frozenset):
+        if tp in PythonBaseTypes.Collection:
             return Collection(o)
-        if tp in (dict, MappingProxyType):
+        if tp in PythonBaseTypes.Mapping:
             return Mapping(o)
-        if tp in (
-            FunctionType, MethodType, BuiltinFunctionType, 
-            BuiltinMethodType, WrapperDescriptorType, MethodDescriptorType, 
-            MethodWrapperType, ClassMethodDescriptorType, GetSetDescriptorType, MemberDescriptorType):
+        if tp in PythonBaseTypes.Mapping:
             return Function(o)
         
         return Object(o)
@@ -139,8 +155,14 @@ class Object(_encodes):
     def attributes(self) -> set[str]:
         return set(getattr(self.obj, '__static_attributes__', None) or ()) | set(getattr(self.obj, '__slots__', None) or ())
     def dict(self) -> dict[str, Any]:
-        return {k: getattr(self.obj, k, None) for k in dir(self.obj) if k not in DEFAULT_OBJECT_DIRECTORY}
+        try:
+            return dict(self.obj.__getstate__()) # type: ignore
+        except:
+            return {k: getattr(self.obj, k, None) for k in dir(self.obj) if k not in DEFAULT_OBJECT_DIRECTORY}
     def encode(self) -> bytes:
+        if result := self._cache_.get(self.obj):
+            return result
+        
         if self.obj is None:
             data = b''
         elif self.obj in (object, type):
@@ -152,7 +174,8 @@ class Object(_encodes):
                 b'attrs': self.attributes(),
                 b'dicti': self.dict()
             }).encode()
-        return _encode(self.Typecode, data)
+        result = self._cache_[self.obj] = _encode(self.Typecode, data)
+        return result
 
     def __repr__(self) -> str:
         if self.obj in (None, object, type):
@@ -165,30 +188,26 @@ class Object(_encodes):
                 'dicti': self.dict()
             })
 
-# [type]{1 byte}[data-size]{3 bytes}[data]{data-size bytes}
-
-# EX: 
-# ('a': 'Hello, World!')
-# [KeyValuePair][size: 2][item: 0]{[String][size: 1][data: b'a']}[item 1:]{[String][size: 13][data: b'Hello, World!']}
 
 
-class wrapper[T](int):
-    z: ClassVar[int] = 82
-    w: ClassVar[int]
-    a: T
-    b: int = 18
+if __name__ == '__main__':
+    class wrapper[T](int):
+        z: ClassVar[int] = 82
+        w: ClassVar[int]
+        a: T
+        b: int = 18
 
-    def __new__(cls, arg: T):
-        cls.a = arg
-        return super().__new__(cls)
+        def __new__(cls, arg: T):
+            cls.a = arg
+            return super().__new__(cls)
 
-    def __init__(self, arg: T, *, y: int = 10) -> None:
-        self.argument = arg
-        self.x = 0
-        self.y = y
+        def __init__(self, arg: T, *, y: int = 10) -> None:
+            self.argument = arg
+            self.x = 0
+            self.y = y
 
 
-o = wrapper(21)
-debug(Object.parse(o).encode())
-o = wrapper
-debug(Object.parse(o).encode())
+    o = wrapper(21)
+    debug(Object.parse(o).encode())
+    o = wrapper
+    debug(Object.parse(o).encode())

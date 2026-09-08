@@ -1,171 +1,238 @@
-from enum import Enum
-from typing import Any, Literal, TypeAlias, cast
+from ctypes import c_uint64
+from io import BytesIO
+from operator import index
+from random import Random
+from typing import Any, Iterable, Self, SupportsIndex
+from typing_extensions import Buffer
 
-UINT_64_MAX = 0xFFFF_FFFF_FFFF_FFFF
-UINT_64_INT_OFFSET = 0x8000_0000_0000_0000
-SALT = (
-    0x301226781111FAEE,
-    0xDECE101852E33B31,
-    0x6459F065E91B8408,
-    0x62C7698F19AD5C27,
-    0x474EBAFAE938C63E,
-    0xC4B1826AD1D42696,
-    0x7909BB6B4260ED07,
-    0x274AC0AED25DCB73,
-    0x83AEC6080C63B230,
-    0x5AFDDDC100001D63,
-    0x901E6B6A65A5F832,
-    0xB78878ADDDA0A3F5,
-    0xEA48AC48EAA2488,
-    0x3091FFA56E139233,
-    0x9B361E270A2607EB,
-    0xE9B710875FE1CEE,
+CONST_UINT64_MAX = 0xFFFFFFFF_FFFFFFFF_FFFFFFFF_FFFFFFFF
+
+
+def buffer_to_uint64_iterable(buffer: Buffer) -> Iterable[int]:
+    data = []
+    with BytesIO(buffer) as io:
+        while bytes := io.read1(8):
+            data.append(int.from_bytes(bytes, byteorder="big", signed=False))
+    return data
+
+
+def any_to_uint64_iterable(*args: Any, **kwargs: Any) -> Iterable[int]:
+    from research_tests_simulations.encoder.v5 import encode
+
+    return buffer_to_uint64_iterable(encode(*args, **kwargs))
+
+
+_SEASONINGS = (
+    0x301226781111FAEE,0xDECE101852E33B31,0x6459F065E91B8408,0x62C7698F19AD5C27,0x474EBAFAE938C63E,0xC4B1826AD1D42696,0x7909BB6B4260ED07,0x274AC0AED25DCB73,
+    0x83AEC6080C63B230,0x5AFDDDC100001D63,0x901E6B6A65A5F832,0xB78878ADDDA0A3F5,0x0EA48AC48EAA2488,0x3091FFA56E139233,0x9B361E270A2607EB,0x0E9B710875FE1CEE,
+    0x8A5A2938E5C41938,0xEC469FCB2FBF2D57,0x49E2C4047E3CD8E6,0x81F94F2B1753DBC3,0x42B804233456956A,0x25A68DED8C00CD53,0x83DD22BC414F5A64,0xD24E92867640AEBA,
+    0x1180F7A66964BEED,0x4B84EB07A3E4896C,0x752DBA7812998CAA,0x161B4B24F31E3FE6,0xBA425ED1C85A44D8,0x3EE633F35F7D40DC,0xF18D10F0FDAEED0E,0x4A244D63308EBC91,
 )
+_SEASONINGS_LEN = len(_SEASONINGS)
 
-class HasherMode(Enum):
-    reset = 0
-    preserve = 1
-    merge = 2
 
-class SeededHashRandomizer:
+class SeededHash:
 
-    def __init__(self, seed: int = 0, mode: HasherMode = HasherMode.merge) -> None:
-        self.seed = seed
-        self._digest = self.seed
-        self._k = 0
-        self._mode = mode
-        
-    @property
-    def pre_digest(self) -> int:
-        return self._digest
+    def __init__(self, *, seed: Any = None, size: SupportsIndex = 1) -> None:
+        self.__SIZE = index(size)
+        self.setseed(seed)
 
-    @property
-    def mode(self) -> HasherMode:
-        return self._mode
-    
-    def deepcopy(self) -> SeededHashRandomizer:
-        h = SeededHashRandomizer(self.seed)
-        h._digest = self._digest
-        h._k = self._k
-        h._mode = self._mode
-        return h
-    
-    def copy(self) -> SeededHashRandomizer:
-        return self.deepcopy()
-
-    def _prepare(self, o: Any) -> int:
-        if isinstance(o, int):
-            return o
-        elif isinstance(o, float):
-            return int(float.hex(o), base=16)
-        elif isinstance(o, str):
-            return int(o.encode().hex(), base=16)
-        elif isinstance(o, bytes):
-            return int(o.hex(), base=16)
-        elif slots := cast(tuple[str], getattr(o, "__slots__")):
-            q = 0
-            for i in range(len(slots)):
-                q ^= self._prepare(getattr(o, slots[i])) * SALT[(2 * i) % 16]
-                q *= SALT[(2 * i + 1) % 16]
-                q &= UINT_64_MAX
-            return q
-        return 0  # NotImplemented, but still accepted
-
-    def _salt(self, i: int) -> int:
-        return SALT[(i + self._k) & 0xF]
-
-    def combine(self, *args: Any) -> SeededHashRandomizer:
-        h = self._digest
-        for o in args:
-            o = self._prepare(o)
-
-            h ^= (o * self._salt(8)) ^ ((o >> 32) * (h >> 32)) ^ self._salt(11) ^ self._salt(3)
-            h ^= (h >> 48) * self._salt(0)
-            h *= self._salt(1)
-            h &= UINT_64_MAX
-            h ^= ((h >> 32) * self._salt(2)) ^ ((h >> 34) * self._salt(3))
-            h *= self._salt(4)
-            h &= UINT_64_MAX
-
-            self._k += 1
-        self._digest = h
+    def setseed(self, seed: Any) -> Self:
+        self.__raw = (c_uint64 * self.__SIZE)()
+        self.__ingredients = 0
+        self.__components = 0
+        self.__stirs = 0
+        self.__seed = seed
+        self.process(seed)
         return self
 
-    def digest(self) -> HashDigest:
-        h = self._digest
+    def reset(self) -> Self:
+        return self.setseed(self.__seed)
 
-        h ^= (
-            ((h >> 16) * self._salt(5))
-            ^ ((h >> 20) * self._salt(6))
-            ^ ((h >> 8) * self._salt(7))
-        )
-        h ^= ((h >> 34) * self._salt(1)) ^ ((h >> 36) * self._salt(4))
-        h *= self._salt(8)
-        h &= UINT_64_MAX
-        h ^= (
-            ((h >> 8) * self._salt(9))
-            ^ ((h >> 16) * self._salt(10))
-            ^ ((h >> 2) * self._salt(11))
-            ^ ((h >> 9) * self._salt(12))
-        )
-        h ^= (
-            ((h >> 18) * self._salt(1))
-            ^ ((h >> 22) * self._salt(6))
-            ^ ((h >> 10) * self._salt(9))
-        )
-        h *= self._salt(7)
-        h &= UINT_64_MAX
-        h ^= (
-            ((h >> 4) * self._salt(13))
-            ^ ((h >> 20) * self._salt(14))
-            ^ ((h >> 1) * self._salt(15))
-        )
-        h ^= ((h >> 38) * self._salt(5)) ^ ((h >> 40) * self._salt(13))
-        h ^= self.seed
-        h &= UINT_64_MAX
+    def getseed(self) -> Any:
+        return self.__seed
 
-        match self._mode:
-            case HasherMode.merge:
-                self.seed = h
-                self._digest = h
-                self._k = 0
-            case HasherMode.reset:
-                self._digest = self.seed
-                self._k = 0
-            case HasherMode.preserve | _:
-                pass
-        
-        return HashDigest(_value=h)
-    
-    def nextstate(self) -> SeededHashRandomizer:
-        self.digest()
+    def __seasoning(self, i: int = 0) -> int:
+        return (
+            _SEASONINGS[(self.__stirs + i) % _SEASONINGS_LEN]
+            ^ self.__stirs
+            ^ (~self.__components)
+            ^ (~(self.__ingredients << 8) >> 8)
+        )
+
+    @property
+    def __index(self) -> int:
+        return self.__stirs + self.__components + self.__ingredients
+
+    @property
+    def __cell(self) -> int:
+        return self.__raw[self.__index % self.__SIZE].value
+
+    @__cell.setter
+    def __cell(self, value: int):
+        self.__raw[self.__index % self.__SIZE] = c_uint64(value)
+
+    def __scramble(self, item: int):
+        s = self.__seasoning()
+        a, b = (s >> 48) & 0x1F, (s >> 16) & 0x1F
+        self.__cell ^= item
+        self.__cell ^= (
+            ((~self.__cell) >> a) * (self.__cell >> b) * (((s) * (~a) * (b)) ^ (item))
+        )
+        self.__cell ^= (
+            ((~self.__cell) >> b)
+            * (self.__cell >> a)
+            * ~(((~s) * (a) * (~b)) ^ (~item))
+        )
+        self.__cell ^= ~item
+        self.__stirs += 1
+
+    def __add(self, *items: int) -> None:
+        self.__stirs = 0
+        for item in items:
+            self.__scramble(item)
+            self.__components += 1
+        self.__cell ^= self.__seasoning(-1) ^ self.__seasoning(1)
+
+    def process(self, *ingredients: Any) -> Self:
+        for ingredient in ingredients:
+            self.__add(*any_to_uint64_iterable(ingredient))
+            self.__ingredients += 1
         return self
 
-    def __int__(self) -> int:
-        return int(self.deepcopy().digest())
-    
-    def __float__(self) -> float: # range of [0,1]
-        return float(self.deepcopy().digest())
-    
-    def __str__(self) -> str:
-        return str(self.deepcopy().digest())
+    def digest(self, *, resets: bool = False) -> int:
+        i = self.__index
+        q = 0
 
-class HashDigest:
+        for j in range(self.__SIZE):
+            q ^= self.__raw[(i + j) % self.__SIZE]
 
-    def __init__(self, *, _value: int) -> None:
-        self._value = _value
+            q ^= (
+                ((q >> 16) * self.__seasoning(j + 5))
+                ^ ((q >> 20) * self.__seasoning(j + 6))
+                ^ ((q >> 8) * self.__seasoning(j + 7))
+            )
+            q ^= ((q >> 34) * self.__seasoning(1)) ^ (
+                (q >> 36) * self.__seasoning(j + 4)
+            )
+            q ^= self.__seasoning(j + 8) * ~q
+            q &= CONST_UINT64_MAX
+            q ^= (
+                ((q >> 8) * self.__seasoning(j + 9))
+                ^ ((q >> 16) * self.__seasoning(j + 10))
+                ^ ((q >> 2) * self.__seasoning(j + 11))
+                ^ ((q >> 9) * self.__seasoning(j + 12))
+            )
+            q ^= (
+                ((q >> 18) * self.__seasoning(j + 1))
+                ^ ((q >> 22) * self.__seasoning(j + 6))
+                ^ ((q >> 10) * self.__seasoning(j + 9))
+            )
+            q ^= self.__seasoning(j + 7) * ~q
+            q &= CONST_UINT64_MAX
+            q ^= (
+                ((q >> 4) * self.__seasoning(j + 13))
+                ^ ((q >> 20) * self.__seasoning(j + 14))
+                ^ ((q >> 1) * self.__seasoning(j + 15))
+            )
+            q ^= ((q >> 38) * self.__seasoning(j + 5)) ^ (
+                (q >> 40) * self.__seasoning(j + 13)
+            )
+            q &= CONST_UINT64_MAX
 
-    def __int__(self) -> int:
-        return self._value
+        if resets:
+            self.reset()
 
-    def __index__(self) -> int:
-        return self._value
+        return q
 
-    def __float__(self) -> float:
-        return (self._value & UINT_64_MAX) / UINT_64_MAX
+    def __getstate__(self) -> object:
+        return {
+            "SIZE": self.__SIZE,
+            "ingredients": self.__ingredients,
+            "components": self.__components,
+            "stirs": self.__stirs,
+            "seed": self.__seed,
+            "raw": bytes(self.__raw),
+        }
 
-    def normalize(self) -> float:
-        return self._value
+    def __setstate__(self, state: object) -> None:
+        if isinstance(state, dict):
+            if not (
+                ("SIZE", "ingredients", "components", "stirs", "seed", "raw") in state
+            ):
+                raise ValueError
+            if (
+                isinstance(size := state.get("SIZE", 1), int)
+                and isinstance(ingredients := state.get("ingredients", 0), int)
+                and isinstance(components := state.get("components", 0), int)
+                and isinstance(stirs := state.get("stirs", 0), int)
+                and isinstance(seed := state.get("seed", None), object)
+                and isinstance(raw := state.get("raw"), bytes)
+            ):
+                self.__SIZE = size
+                self.__ingredients = ingredients
+                self.__components = components
+                self.__stirs = stirs
+                self.__seed = seed
+                self.__raw = (c_uint64 * size).from_buffer_copy(raw)
+            else:
+                raise TypeError
+        else:
+            raise TypeError
 
-    def __str__(self) -> str:
-        return hex(self._value)
+    def nextstate(self) -> Self:
+        return self.process(self.digest())
+
+    def __bytes__(self) -> bytes:
+        return bytes(self.__raw)
+
+    def __repr__(self) -> str:
+        return super().__repr__() + f'{{{bytes(self)}}}'
+
+
+class HashRandom(SeededHash, Random):
+
+    def __init__(self, *, seed: Any = None, size: SupportsIndex = 16) -> None:
+        super().__init__(seed=seed, size=size)
+
+    def setseed(self, seed: Any) -> Self:
+        return super().setseed(seed).process(_SEASONINGS_LEN, *_SEASONINGS)
+
+    def seed(self, a: Any = None, version: int | None = None) -> None:
+        match version:
+            case 0:
+                super().setseed(a)
+            case 1 | None:
+                self.setseed(a)
+            case int():
+                raise ValueError(version)
+            case _:
+                raise TypeError(version)
+
+    def bit_length(self) -> int:
+        return self.__SIZE * 64
+
+    def getrandbits(self, k: int) -> int:
+        data = bytes(self)
+        while (len(data)<<3) < k:
+            data += bytes(self.nextstate())
+        else:
+            self.nextstate()
+        return int.from_bytes(data, byteorder='big', signed=False) & (1<<k)
+
+    def random(self) -> float:
+        """Generates a random float in the range [0,1]"""
+        from math import ldexp
+        mantissa = 0x10_0000_0000_0000 | self.getrandbits(52)
+        exponent = -53
+        x = 0
+        while not x:
+            x = self.getrandbits(32)
+            exponent += x.bit_length() - 32
+        return ldexp(mantissa, exponent)
+
+    def randbool(self) -> bool:
+        return bool(self.getrandbits(1))
+
+    def randchance(self, chance: float = 0.5) -> bool:
+        return super().random() < chance

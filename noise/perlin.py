@@ -1,22 +1,23 @@
 from math import floor
+from typing import Any
 
 if __name__ == "__main__":
-    from noise.hashrandom import SeededHashRandomizer, HasherMode
+    from noise.hashrandom import HashRandom
 else:
-    from .hashrandom import SeededHashRandomizer, HasherMode
+    from .hashrandom import HashRandom
 
 
 class perlin:
 
-    def __init__(self, seed: int) -> None:
-        self._hasher = SeededHashRandomizer(seed, HasherMode.reset)
+    def __init__(self, seed: Any) -> None:
+        self._hasher = HashRandom(seed=seed)
 
     @property
-    def seed(self) -> int:
-        return self._hasher.seed
+    def seed(self) -> Any:
+        return self._hasher.getseed()
 
     def random(self, *dims: int) -> float:
-        return float(self._hasher.combine(*dims).digest())
+        return self._hasher.reset().process(*dims).random()
 
     @classmethod
     def inflate(cls, x: float) -> float:
@@ -71,7 +72,7 @@ class perlin:
         return constants[0]
 
     def octaves(
-        self, *dims: float, octaves: int, persistance: float, lacunarity: float
+        self, *dims: float, octaves: int, persistance: float = 0.5, lacunarity: float = 2
     ) -> float:
         value = 0
         amplitude = 2
@@ -90,7 +91,7 @@ class perlin:
             value += amplitude * (func(*dims) - 0.5)
             weight += amplitude
             amplitude *= persistance
-            dims = tuple(dim * lacunarity for dim in dims)
+            dims = tuple(dim / lacunarity for dim in dims)
 
         return value / weight + 0.5
 
