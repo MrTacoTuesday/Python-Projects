@@ -1,7 +1,8 @@
+from abc import ABC, abstractmethod
 from collections.abc import Buffer
 from ctypes import c_double
 from enum import ReprEnum
-from types import FunctionType, MethodType
+from types import BuiltinFunctionType, BuiltinMethodType, ClassMethodDescriptorType, FunctionType, GetSetDescriptorType, MappingProxyType, MemberDescriptorType, MethodDescriptorType, MethodType, MethodWrapperType, WrapperDescriptorType
 from typing import Any, ClassVar, Iterable, SupportsIndex
 from typing_extensions import Self
 
@@ -35,29 +36,34 @@ class Typecode(bytes, ReprEnum):
     Sequence = b'\x05'
     Set = b'\x06'
     Mapping = b'\x07'
+    Function = b'\x08'
+    Type = b'\x09'
+    Object = b'\x0a'
 
 
-class _encodes:
+class _encodes(ABC):
     def encode(self) -> bytes:
         raise NotImplementedError
 
 def _encode(t: Typecode, d: Buffer) -> bytes:
     if not isinstance(d, (bytes, bytearray)):
         d = bytes(d)
-    return t + len(d).to_bytes(7) + d
-def _encode_generic(o: Any) -> bytes:
-    if isinstance(o, _encodes):
-        return o.encode()
-    
+    l = len(d)
+    lb = (l.bit_length()+7)>>3
+    return t + lb.to_bytes() + l.to_bytes(lb) + d
 
-    raise NotImplementedError
+def _encode_generic(o: Any) -> bytes:
+    return Object.parse(o).encode()
 
 class Bytes(bytes, _encodes): 
     def encode(self) -> bytes:
         return _encode(Typecode.Bytes, self)
 class Integer(int, _encodes):
     def encode(self) -> bytes:
-        return _encode(Typecode.Integer, self.to_bytes((self.bit_length()+7)>>3, signed=True))
+        try:
+            return _encode(Typecode.Integer, self.to_bytes((self.bit_length()+7)>>3, signed=True))
+        except:
+            return _encode(Typecode.Integer, self.to_bytes((self.bit_length()+7)>>3, signed=False))
 class FloatingPoint(float, _encodes):
     def encode(self) -> bytes:
         return _encode(Typecode.FloatingPoint, c_double(self))
@@ -68,7 +74,7 @@ class KeyValuePair(tuple[Any, Any], _encodes):
     def encode(self) -> bytes:
         result = Typecode.KeyValuePair
         for item in self:
-            result += _encode_generic(item)
+            result += Object.parse(item).encode()
         return result
 class Collection(tuple[Any, ...], _encodes):
     Ordered: ClassVar[bool]
@@ -79,17 +85,92 @@ class Collection(tuple[Any, ...], _encodes):
     def encode(self) -> bytes:
         segments: list[bytes] = []
         for i, item in enumerate(self):
-            segments.append(i.to_bytes(3) + _encode_generic(item))
+            segments.append(i.to_bytes(3) + Object.parse(item).encode())
         if not self.Ordered:
             segments.sort()
-        return _encode(self.Typecode, sum(segments, b''))
+        return _encode(self.Typecode, b''.join(segments))
 class Mapping(dict[Any, Any], _encodes):
     def encode(self) -> bytes:
         segments: list[bytes] = []
         for item in self.items():
             segments.append(KeyValuePair(item).encode())
         segments.sort()
-        return _encode(Typecode.Mapping, sum(segments, b''))
+        return _encode(Typecode.Mapping, b''.join(segments))
+class Function(_encodes):
+    def __init__(self, func: FunctionType | MethodType | WrapperDescriptorType):
+        self.func = func
+    def encode(self) -> bytes:
+        try:
+            closure = getattr(self.func, '__closure__', None) or b''
+            if closure: 
+                closure = b'@' + bytes(closure[0].cell_contents.__qualname__, 'utf-8')
+            closure += getattr(self.func, '__code__.co_code', b'')
+        except:
+            closure = b'<unknown>'
+        return _encode(Typecode.Function, self.func.__name__.encode()+closure)
+    def __repr__(self) -> str:
+        return repr(self.func)
+class Object(_encodes):
+    @classmethod
+    def parse(cls, o: Any) -> _encodes:
+        if isinstance(o, _encodes):
+            return o
+        tp = type(o)
+        if tp in (bytes, memoryview, bytearray):
+            return Bytes(o)
+        if tp in (int, bool):
+            return Integer(o)
+        if tp in (float,):
+            return FloatingPoint(o)
+        if tp in (str,):
+            return String(o)
+        if tp in (tuple, list, set, frozenset):
+            return Collection(o)
+        if tp in (dict, MappingProxyType):
+            return Mapping(o)
+        if tp in (
+            FunctionType, MethodType, BuiltinFunctionType, 
+            BuiltinMethodType, WrapperDescriptorType, MethodDescriptorType, 
+            MethodWrapperType, ClassMethodDescriptorType, GetSetDescriptorType, MemberDescriptorType):
+            return Function(o)
+        
+        return Object(o)
+
+    def __init__(self, value: object):
+        self.obj = value
+        self.Typecode = Typecode.Type if isinstance(value, type) else Typecode.Object
+    def origin(self) -> type[Any]:
+        return getattr(self.obj, '__origin__', getattr(self.obj, '__orig_class__', getattr(self.obj, '__class__', type(self.obj))))
+    def bases(self) -> tuple[type[Any], ...]:
+        return tuple(getattr(self.obj, '__orig_bases__', getattr(self.obj, '__bases__', ())))
+    def attributes(self) -> set[str]:
+        return set(getattr(self.obj, '__static_attributes__', None) or ()) | set(getattr(self.obj, '__slots__', None) or ())
+    def dict(self) -> dict[str, Any]:
+        return {k: getattr(self.obj, k, None) for k in dir(self.obj) if k not in DEFAULT_OBJECT_DIRECTORY}
+    def encode(self) -> bytes:
+        if self.obj is None:
+            data = b''
+        elif self.obj in (object, type):
+            data = b'\x00'
+        else:
+            data = Mapping({
+                b'origi': self.origin(),
+                b'bases': self.bases(),
+                b'attrs': self.attributes(),
+                b'dicti': self.dict()
+            }).encode()
+        return _encode(self.Typecode, data)
+
+    def __repr__(self) -> str:
+        if self.obj in (None, object, type):
+            return repr(self.obj)
+        else:
+            return repr({
+                'origi': self.origin(),
+                'bases': self.bases(),
+                'attrs': self.attributes(),
+                'dicti': self.dict()
+            })
 
 # [type]{1 byte}[data-size]{3 bytes}[data]{data-size bytes}
 
@@ -113,54 +194,8 @@ class wrapper[T](int):
         self.x = 0
         self.y = y
 
-def get_object_data(o: object):
-    typ = type(o)
-    cls = getattr(o, '__origin__', getattr(o, '__orig_class__', getattr(o, '__class__', None)))
-    bases = tuple(getattr(o, '__orig_bases__', getattr(o, '__bases__', ())))
-    attrs = set(getattr(o, '__static_attributes__', None) or ())
-    slots = set(getattr(o, '__slots__', None) or ())
-    dct = get_object_dict(o)
-    return (typ, cls, bases, attrs, slots, dct,)
-
-def get_object_dict(o: object):
-    return {k:v for k,v in getattr(o, '__dict__', {}).items() if k not in (
-        '__firstlineno__', '__type_params__', '__annotate_func__', '__orig_class__', '__dict__', '__weakref__', '__origin__', '__orig_bases__', '__static_attributes__', '__slots__', '__class__', '__bases__'
-    )}
-
-def get_function_data(f: FunctionType | MethodType):
-    closure = f.__closure__
-    if closure: 
-        closure = b'@' + bytes(closure[0].cell_contents.__qualname__, 'utf-8')
-    else:
-        closure = b''
-    return (f.__name__.encode()+closure+f.__code__.co_code)
-
-
-def get_object_state(o: object, reduce_protocol_version: SupportsIndex = 5):
-    tp = type(o)
-    state = tp.__getstate__(o)
-    if state is not None:
-        # class instance with data
-        debug(state)
-        return tp.__reduce_ex__(o, reduce_protocol_version)[1:]
-    else:
-        debug(o)
-        debug(tp.__reduce_ex__(o, 5))
-        ... # is struct data type? get superclass & raw value
-
-
-
-
 
 o = wrapper(21)
-debug(get_object_data(o))
-debug(get_object_state(o))
+debug(Object.parse(o).encode())
 o = wrapper
-debug(get_object_data(o))
-debug(get_object_state(o))
-
-class ObjectState(dict[str, Any]):
-    def __init__(self, iterable: Iterable[tuple[str, Any]]) -> None:
-        dict(iterable)
-    def __repr__(self) -> str:
-        for k in (set(self)-DEFAULT_OBJECT_DIRECTORY):
+debug(Object.parse(o).encode())

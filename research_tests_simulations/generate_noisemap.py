@@ -29,8 +29,9 @@ def seedify(s: str | bytes | int) -> int:
     b = s if isinstance(s, bytes) else bytes(s)
     h = len(b)
     for i in range(h):
-        h = (h << i) ^ b[i]
-    return ~(h & UINT_64_MAX) - UINT_64_INT_OFFSET
+        h = (h << i) ^ b[i] ^ int.from_bytes(b + h.to_bytes(8), signed=False)
+        h &= UINT_64_MAX
+    return abs((h) & UINT_64_MAX)
 
 
 def clamp(value: float, min: float = 0, max: float = 1) -> float:
@@ -50,6 +51,7 @@ class NoiseMachine:
     def random(self, x: int, y: int = 0) -> float:
         h = self.seed
         h ^= x * SALT[0]
+        h ^= (h >> 55) * SALT[3]
         h ^= y * SALT[1]
         h ^= (h >> 29) * SALT[3]
         h *= SALT[2]
@@ -127,12 +129,12 @@ EIGHTY_THIRTEENTHS = 80/13
 def Continentalness(seed: int = 0, x_offset: int = 0, y_offset: int = 0) -> NoiseMachine:
     return NoiseMachine(
         seed=seed,
-        scale=334.7,
+        scale=48,#16.77,
         persistance=0.28000755,
         lacunarity=3.69743099,
-        octaves=4,
-        base_x_offset=-seed & SALT[3] ^ 0x34ef0a + x_offset,
-        base_y_offset=seed & SALT[4] ^ 0x34ef0a + y_offset,
+        octaves=1,
+        base_x_offset=(-seed & SALT[3] ^ 0x34ef0a + x_offset)&0xffffffff,
+        base_y_offset=(seed & SALT[4] ^ 0x34ef0a + y_offset)&0xffffffff,
     )
     
 
@@ -177,13 +179,15 @@ ROCKY_LEVEL = 1.00
 
 def float_to_hsv(x: float, mode: Literal['default', 'minecraft_colorize']='minecraft_colorize') -> tuple[float, float, float]:
     x = normalize_float(x)
+    
     value = 0.5+0.5*(x-1)**2
+    x *= x
     match mode:
         case 'minecraft_colorize':
             saturation = ONE_THIRD+2*ONE_THIRD*(x-1)**2
             if x<=DEEP_OCEAN_LEVEL:
-                hue = 0.72
-                saturation**=0.5
+                hue = 0.67
+                saturation**=2
                 value**=2
             elif x<=OCEAN_LEVEL:
                 hue = 0.65
@@ -341,20 +345,16 @@ def visualize(
 
 
 TESTING_SEED = (
-    seedify("This Is The Testing Seed")
-    ^ seedify("Ryley just left to go take a shower wheee")
-    ^ seedify(
-        "'I just really want to go home...' she said, .. but no one answered back."
-    )
-    ^ seedify("'Should I stay or should I go?' -- The Clash")
-    ^ seedify("""
-        I may or may not have done too many of these ...
-        (If 'these' refers to generations, seeds, time spent on revisions, etc...)
-        """)
-    ^ seedify("""
-        1 + 1 is 2, but me + you is??
-        Us hehehe
-        """)
+    seedify("This Is The Testing Seed") ^ 
+    seedify('Uncle Steven instructed me to change the seed') ^ 
+    seedify('Zoey wants to play, to be our good luck charm!') ^
+    seedify('Hellooo') ^
+    seedify('Boo') ^ 
+    seedify('I just came in at the right moment.. or the wrong moment?') ^
+    seedify('What is a salt?') ^
+    seedify('Do you wanna try different words?') ^
+    seedify('He just added my question to') ^
+    seedify('Dinosaur soup is not tasty in the fall, but in the winter, tastes amazing. Yeah I think we do yeah. Umm, I\'m not sure actually.......')
 )
 
 
@@ -362,9 +362,9 @@ TESTING_SEED = (
 if __name__ == "__main__":
     continentalness = Continentalness(seed=TESTING_SEED)
     print(continentalness)
-    CHUNK_SIZE = 1024
+    CHUNK_SIZE = 4096
     CHUNKS = (1,1)
-    MODE: GENERATOR_MODE = "GRAYSCALE"
+    MODE: GENERATOR_MODE = "COLOR"
     FILENAME_BASE = get_datetime_formatted() + '_x%d_y%d'
     for cy in range(CHUNKS[1]):
         for cx in range(CHUNKS[0]):
