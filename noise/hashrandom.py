@@ -66,7 +66,7 @@ class SeededHash:
 
     @property
     def __cell(self) -> int:
-        return self.__raw[self.__index % self.__SIZE].value
+        return self.__raw[self.__index % self.__SIZE]
 
     @__cell.setter
     def __cell(self, value: int):

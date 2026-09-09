@@ -1,13 +1,13 @@
 from math import floor
 from typing import Any
 
-if __name__ == "__main__":
-    from noise.hashrandom import HashRandom
-else:
+try:
+    from hashrandom import HashRandom
+except:
     from .hashrandom import HashRandom
 
-
-class perlin:
+__all__ = ['Perlin']
+class Perlin:
 
     def __init__(self, seed: Any) -> None:
         self._hasher = HashRandom(seed=seed)
