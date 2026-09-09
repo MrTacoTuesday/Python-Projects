@@ -140,7 +140,7 @@ class Object(_encodes):
             return Collection(o)
         if tp in PythonBaseTypes.Mapping:
             return Mapping(o)
-        if tp in PythonBaseTypes.Mapping:
+        if tp in PythonBaseTypes.Function:
             return Function(o)
         
         return Object(o)

@@ -1,8 +1,4 @@
-if __name__ == '__main__':
-    import extensions
-    import epsilon
-else:
-    from . import extensions, epsilon
+from . import extensions, epsilon, numeric
 
-__all__ = ['extensions', 'epsilon']
+__all__ = ['extensions', 'epsilon', 'numeric']
 

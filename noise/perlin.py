@@ -1,10 +1,7 @@
 from math import floor
 from typing import Any
 
-try:
-    from hashrandom import HashRandom
-except:
-    from .hashrandom import HashRandom
+from noise.hashrandom import HashRandom
 
 __all__ = ['Perlin']
 class Perlin:

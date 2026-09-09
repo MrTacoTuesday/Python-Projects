@@ -4,6 +4,6 @@ if __name__ == '__main__':
 else:
     from . import optional as Optional
 
-__all__ = {
+__all__ = [
     'Optional'
-}
+]

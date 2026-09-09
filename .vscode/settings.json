@@ -1,31 +1,4 @@
 {
 	"python.analysis.languageServerMode": "full",
 	"python.analysis.typeCheckingMode": "standard",
-	"python-envs.pythonProjects": [
-		{
-			"path": "noise",
-			"envManager": "ms-python.python:system",
-			"packageManager": "ms-python.python:pip"
-		},
-		{
-			"path": "research_tests_simulations",
-			"envManager": "ms-python.python:system",
-			"packageManager": "ms-python.python:pip"
-		},
-		{
-			"path": "textualprojects",
-			"envManager": "ms-python.python:system",
-			"packageManager": "ms-python.python:pip"
-		},
-		{
-			"path": "utilities",
-			"envManager": "ms-python.python:system",
-			"packageManager": "ms-python.python:pip"
-		},
-		{
-			"path": ".",
-			"envManager": "ms-python.python:system",
-			"packageManager": "ms-python.python:pip"
-		}
-	]
 }

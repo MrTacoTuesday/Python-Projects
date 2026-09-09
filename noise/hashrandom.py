@@ -1,11 +1,15 @@
-from ctypes import c_uint64
+from ctypes import Array, c_uint64
 from io import BytesIO
 from operator import index
 from random import Random
 from typing import Any, Iterable, Self, SupportsIndex
 from typing_extensions import Buffer
 
+from research_tests_simulations.encoder import v5 as encoder
+
 CONST_UINT64_MAX = 0xFFFFFFFF_FFFFFFFF_FFFFFFFF_FFFFFFFF
+
+__all__: list[str] = ['encoder', 'buffer_to_uint64_iterable', 'any_to_uint64_iterable', 'SeededHash', 'HashRandom']
 
 
 def buffer_to_uint64_iterable(buffer: Buffer) -> Iterable[int]:
@@ -17,9 +21,7 @@ def buffer_to_uint64_iterable(buffer: Buffer) -> Iterable[int]:
 
 
 def any_to_uint64_iterable(*args: Any, **kwargs: Any) -> Iterable[int]:
-    from research_tests_simulations.encoder.v5 import encode
-
-    return buffer_to_uint64_iterable(encode(*args, **kwargs))
+    return buffer_to_uint64_iterable(encoder.encode(*args, **kwargs))
 
 
 _SEASONINGS = (
@@ -28,17 +30,17 @@ _SEASONINGS = (
     0x8A5A2938E5C41938,0xEC469FCB2FBF2D57,0x49E2C4047E3CD8E6,0x81F94F2B1753DBC3,0x42B804233456956A,0x25A68DED8C00CD53,0x83DD22BC414F5A64,0xD24E92867640AEBA,
     0x1180F7A66964BEED,0x4B84EB07A3E4896C,0x752DBA7812998CAA,0x161B4B24F31E3FE6,0xBA425ED1C85A44D8,0x3EE633F35F7D40DC,0xF18D10F0FDAEED0E,0x4A244D63308EBC91,
 )
-_SEASONINGS_LEN = len(_SEASONINGS)
+_SEASONINGS_LEN: int = len(_SEASONINGS)
 
 
 class SeededHash:
 
     def __init__(self, *, seed: Any = None, size: SupportsIndex = 1) -> None:
-        self.__SIZE = index(size)
+        self.__SIZE: int = index(size)
         self.setseed(seed)
 
     def setseed(self, seed: Any) -> Self:
-        self.__raw = (c_uint64 * self.__SIZE)()
+        self.__raw: Array[c_uint64] = (c_uint64 * self.__SIZE)()
         self.__ingredients = 0
         self.__components = 0
         self.__stirs = 0
@@ -69,11 +71,11 @@ class SeededHash:
         return self.__raw[self.__index % self.__SIZE]
 
     @__cell.setter
-    def __cell(self, value: int):
+    def __cell(self, value: int) -> None:
         self.__raw[self.__index % self.__SIZE] = c_uint64(value)
 
-    def __scramble(self, item: int):
-        s = self.__seasoning()
+    def __scramble(self, item: int) -> None:
+        s: int = self.__seasoning()
         a, b = (s >> 48) & 0x1F, (s >> 16) & 0x1F
         self.__cell ^= item
         self.__cell ^= (
@@ -101,7 +103,7 @@ class SeededHash:
         return self
 
     def digest(self, *, resets: bool = False) -> int:
-        i = self.__index
+        i: int = self.__index
         q = 0
 
         for j in range(self.__SIZE):
@@ -169,12 +171,12 @@ class SeededHash:
                 and isinstance(seed := state.get("seed", None), object)
                 and isinstance(raw := state.get("raw"), bytes)
             ):
-                self.__SIZE = size
-                self.__ingredients = ingredients
-                self.__components = components
-                self.__stirs = stirs
-                self.__seed = seed
-                self.__raw = (c_uint64 * size).from_buffer_copy(raw)
+                self.__SIZE: int = size
+                self.__ingredients: int = ingredients
+                self.__components: int = components
+                self.__stirs: int = stirs
+                self.__seed: object = seed
+                self.__raw: Array[c_uint64] = (c_uint64 * size).from_buffer_copy(raw)
             else:
                 raise TypeError
         else:
@@ -186,8 +188,11 @@ class SeededHash:
     def __bytes__(self) -> bytes:
         return bytes(self.__raw)
 
+    def __buffer__(self, flags: int, /) -> memoryview:
+        return self.__raw.__buffer__(flags)
+
     def __repr__(self) -> str:
-        return super().__repr__() + f'{{{bytes(self)}}}'
+        return self.__class__.__qualname__ + f'{{{bytes(self)}}}'
 
 
 class HashRandom(SeededHash, Random):
@@ -223,11 +228,11 @@ class HashRandom(SeededHash, Random):
     def random(self) -> float:
         """Generates a random float in the range [0,1]"""
         from math import ldexp
-        mantissa = 0x10_0000_0000_0000 | self.getrandbits(52)
+        mantissa: int = 0x10_0000_0000_0000 | self.getrandbits(52)
         exponent = -53
         x = 0
         while not x:
-            x = self.getrandbits(32)
+            x: int = self.getrandbits(32)
             exponent += x.bit_length() - 32
         return ldexp(mantissa, exponent)
 
