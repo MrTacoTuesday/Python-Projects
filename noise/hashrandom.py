@@ -60,7 +60,7 @@ class SeededHash:
             ^ self.__stirs
             ^ (~self.__components)
             ^ (~(self.__ingredients << 8) >> 8)
-        )
+        ) & CONST_UINT64_MAX
 
     @property
     def __index(self) -> int:
@@ -96,10 +96,13 @@ class SeededHash:
             self.__components += 1
         self.__cell ^= self.__seasoning(-1) ^ self.__seasoning(1)
 
+    def __process(self, *items: int) -> None:
+        self.__add(*items)
+        self.__ingredients += 1
+
     def process(self, *ingredients: Any) -> Self:
         for ingredient in ingredients:
-            self.__add(*any_to_uint64_iterable(ingredient))
-            self.__ingredients += 1
+            self.__process(*any_to_uint64_iterable(ingredient))
         return self
 
     def digest(self, *, resets: bool = False) -> int:
@@ -239,5 +242,5 @@ class HashRandom(SeededHash, Random):
     def randbool(self) -> bool:
         return bool(self.getrandbits(1))
 
-    def randchance(self, chance: float = 0.5) -> bool:
-        return super().random() < chance
+    def randchance(self, probability: float = 0.5) -> bool:
+        return super().random() < probability
