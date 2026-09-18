@@ -209,5 +209,3 @@ if __name__ == '__main__':
 
     o = wrapper(21)
     debug(Object.parse(o).encode())
-    o = wrapper
-    debug(Object.parse(o).encode())

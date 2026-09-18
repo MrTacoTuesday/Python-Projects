@@ -3,11 +3,10 @@ from datetime import datetime
 import random
 import statistics
 import time
-from types import FunctionType, MethodType
-from typing import Any, overload
+from types import MethodType
+from typing import Any
 from typing_extensions import Self
 
-from noise.perlin import Perlin
 from noise.hashrandom import HashRandom, SeededHash
 from utilities import debug
 
@@ -107,7 +106,8 @@ def _uniqueness_test(fn: MethodType, *, N: int = 10_000, key: Callable[[Any], An
             duplicates += 1
         else:
             uniques.add(i)
-    print(f'\tCheck complete. {len(uniques)-duplicates:,}/{N:,} ({(len(uniques)-duplicates)/N:0.2%}) unique values produced')
+    uniques = len(uniques)+(duplicates>>1)
+    print(f'\tCheck complete. {uniques:,}/{N:,} ({uniques/N:0.2%}) unique values produced')
 
 @Wrapper
 def seededhash_capability_test() -> None:
@@ -119,30 +119,52 @@ def seededhash_capability_test() -> None:
     
 
 @Wrapper
-def hashrandom_method_statistics_test(fn: FunctionType, N: int = 10_000) -> None:
-    rng = HashRandom(seed=fn.__qualname__)
-    print(f'Specifically targeting {fn.__qualname__}')
-    print(f'Generator: \n\t{rng}')
+def random_method_statistics_test[T: random.Random](cls: type[T], N: int = 10_000) -> None:
+    rng = cls(cls.__qualname__*10)
+
+    print(f'Targeting Generator {cls.__qualname__}:')
+    print(  f'\t{rng}')
+
     print(f'population (N={N:,}) stats:')
-    population = tuple(fn.__call__(rng) for _ in range(N))
-    print('\tpop. mean:       ', mean := statistics.mean(population))
-    print('\tpop. quartiles:  ', statistics.quantiles(population))
-    print('\tpop. variance:   ', statistics.variance(population, mean))
+
+    population = [0.0]*N
+    k = (N+999)//1_000 # 0.1% of N
+
+    for i in range(N):
+        if not (i % k): print(  f'\t(generating {i/N:0.1%})', end='\r')
+        population[i] = rng.random()
+    print(  '\t(generated 100%, getting stats...)')
+    print(  '\tpop. mean:       ', statistics.mean(population))
+    print(  '\tpop. variance:   ', statistics.variance(population, 0.5))
+
     n = (N+9)//10
     print(f'sample (n={n:,}):')
+
     sample = random.sample(population, n)
-    print('\tsample mean:     ', mean := statistics.mean(sample))
-    print('\tsample quartiles:', statistics.quantiles(sample))
-    print('\tsample variance: ', statistics.variance(sample, mean))
+    print(  '\t(generated 100%, getting stats...)')
+    print(  '\tsample mean:     ', statistics.mean(sample))
+    print(  '\tsample variance: ', statistics.variance(sample, 0.5))
 
 
 @Wrapper
 def hashrandom_capability_test() -> None:
-    hashrandom_method_statistics_test(HashRandom.random)
+    #random_method_statistics_test(random.Random, 1_000_000)
+    #random_method_statistics_test(HashRandom, 1_000_000)
+    hashrandom_getrandbits_test()
+
+@Wrapper
+def hashrandom_getrandbits_test() -> None:
+    print(rng := HashRandom("HashRandom"*32, size=4))
+    print(bytes(rng)[0:3].hex())
+    print(tuple(rng.getrandbits(1) for _ in range(32)))
+    print(rng)
 
 @Wrapper
 def run_all_tests() -> None:
-    seededhash_capability_test()
+    print(rng := HashRandom("HashRandom"*32, size=4))
+    print(tuple(rng.random() for _ in range(32)))
+    print(rng)
+    #seededhash_capability_test()
     hashrandom_capability_test()
 
 

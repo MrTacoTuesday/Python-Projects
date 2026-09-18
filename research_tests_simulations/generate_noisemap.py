@@ -1,3 +1,4 @@
+## Author: Weston Chaney
 from dataclasses import InitVar, dataclass, field
 import datetime
 from io import BytesIO
@@ -362,9 +363,9 @@ TESTING_SEED = (
 if __name__ == "__main__":
     continentalness = Continentalness(seed=TESTING_SEED)
     print(continentalness)
-    CHUNK_SIZE = 4096
+    CHUNK_SIZE = 1024
     CHUNKS = (1,1)
-    MODE: GENERATOR_MODE = "COLOR"
+    MODE: GENERATOR_MODE = "GRAYSCALE"
     FILENAME_BASE = get_datetime_formatted() + '_x%d_y%d'
     for cy in range(CHUNKS[1]):
         for cx in range(CHUNKS[0]):
