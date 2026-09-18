@@ -236,24 +236,33 @@ class HashRandom(SeededHash, Random):
         self._bits_used = 0
         return super().nextstate()
 
-    ## TODO: FIXME: currently produces unique, random (avg 0.5) values, but is quite slow
+    ## TODO: FIXME: currently produces unique random (avg 0.5) values, but is quite slow
     def getrandbits(self, k: int) -> int:
         if k == 0:
             return 0
+        elif k < 0:
+            raise ValueError(k)
+        # read bits from left to right;
+        # if 4 bits are already used:
+        #     0b10001010_10100100_01001011 & (0b0000_1111_11111111_11111111)
+        #  =  0b____1010_10100100_01001011
+        # and 5 bits are requested:
+        #     0b1010_10100100_01001011 >> (L-4-5) # 24-4-5 = 15
+        #  =  0b10101_010010001001011 >> 15 = 0b10101
 
         l = self.bit_length()
+        bit_offset = l-self._bits_used
+        mask = (1<<bit_offset)-1
+        bits_unused = bit_offset-k
+        data = int.from_bytes(self, byteorder='little', signed=False)&mask
 
-        b = self._bits_used
-        data = int.from_bytes(self, byteorder='big', signed=False)>>b
-        b = data.bit_length()
-
-        while b < k:
-            data <<= l
-            b += l
-            data ^= int.from_bytes(self.nextstate(), byteorder='big', signed=False)
-        if b > k:
-            self._bits_used = b-k
-            data >>= self._bits_used
+        if bits_unused <= 0:
+            data <<= -bits_unused
+            self.nextstate()
+            data |= self.getrandbits(-bits_unused)
+        else:
+            self._bits_used += k
+            data >>= bits_unused
         return data
     
     def random(self) -> float:
