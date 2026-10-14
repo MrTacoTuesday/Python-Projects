@@ -1,0 +1,12 @@
+{
+    "name": "Default Behaviors",
+    "description": "The game's main behavior pack",
+    "pack-id": "0a8ee0e0-d9f6-42a2-b5a2-c010e872bb7a",
+    "version": [1,0,0],
+    "authors": ["Weston Chaney"],
+    "dependencies": {
+        "0a8ee0e0-d9f6-42a2-b5a2-c010e872bb7a": [
+            "resource", [1,0,0], ">="
+        ]
+    }
+}

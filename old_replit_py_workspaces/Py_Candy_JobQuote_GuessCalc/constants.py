@@ -1,0 +1,16 @@
+## CANDY DIMENSIONS ##
+DIM_COOKIE = (3, 3, 1 / 3)
+DIM_KISS = (0.5, 0.5, 1)
+DIM_RMINI = (1 + 1 / 16, 1 + 1 / 16, 0.625)  # Correct
+DIM_RCUP = (2, 2, 0.5)
+DIM_OREO = (1.5, 1.5, 1 / 3)
+DIM_MALLOW = (1, 1, 1)  # Correct
+
+## MOWER TYPES ##
+MOWER_RIDING = 0
+MOWER_PUSH = 1
+MOWER_WEEDEATER = 2
+
+## MATERIAL PROVISION ##
+MATS_NOT_PROVIDED = False
+MATS_PROVIDED = True

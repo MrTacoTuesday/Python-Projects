@@ -1,0 +1,45 @@
+from types import (
+    BuiltinFunctionType,
+    BuiltinMethodType,
+    FunctionType,
+    MethodType,
+    LambdaType,
+    ModuleType,
+    TracebackType
+)
+from functools import partial
+from toolz import curry
+import inspect
+    
+def isfunction(variable: any) -> bool:
+    return isinstance(
+        variable,
+        (
+            BuiltinFunctionType,
+            BuiltinMethodType,
+            FunctionType,
+            MethodType,
+            LambdaType,
+            partial,
+            curry
+        ),
+    )
+    
+isclass = inspect.isclass
+    
+def ismodule(variable: any) -> bool:
+   return isinstance(variable, ModuleType)
+    
+    
+def isexception(variable: any) -> bool:
+    return isinstance(variable, Exception)
+    
+    
+def istraceback(variable: any) -> bool:
+    return isinstance(variable, TracebackType)
+    
+    
+def isclassinstance(x: any) -> bool:
+    if isfunction(x) or isclass(x) or ismodule(x) or istraceback(x) or isexception(x):
+        return False
+    return True

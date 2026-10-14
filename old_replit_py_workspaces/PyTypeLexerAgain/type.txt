@@ -1,0 +1,140 @@
+from typing import List, Dict, Any
+
+GLOBALTYPES: Dict[str, "Type"] = {}
+
+"""
+"Program": {
+	"Globals": {
+		"builtins": {"module"}
+	},
+	"Locals": {
+		"type.py": {
+			"List": {"typing.List"},
+			"Dict": {"typing.list"},
+			"Any": {"typing.Any"},
+			"GLOBALTYPES": {"builtins.dict"},
+			"program": {"builtins.dict"},
+			"Type": {"type.Type"},
+			......
+		}
+	}
+}
+"""
+
+class Type:
+	def __init__(self, name: str, scope: Dict[str, "Type"] = GLOBALTYPES):
+		self.fullname = name
+		self.name = name.split(".")[-1]
+		self.__inherits__: List["Type"] = [self]
+		self.__literals__: List[type] = []
+		self.static = {}
+		self.data = {}
+		self = scope.setdefault(self.fullname, self)
+	@property
+	def Type(self) -> "Type":
+		return self
+	def inheritance(self, *type: "Type"):
+		types = map(lambda i: (
+			None if self.__inherits__.count(i) else i), type)
+		self.__inherits__.extend(list(types))
+	def literals(self, *type: "LiteralType"):
+		types = map(lambda i: (
+			None if self.__literals__.count(i) else i), type)
+		self.__literals__.extend(list(types))
+	def isliteral(self, literal: "LiteralType") -> bool:
+		for typ in self.__inherits__:
+			if self.__literals__.count(literal):
+				return True
+			return typ.isliteral(type)
+		return False
+	def inherits(self, type: "Type") -> bool:
+		if type.fullname == "builtins.Any": return True
+		for typ in self.__inherits__:
+			if typ.fullname == type.fullname:
+				return True
+			if typ == self: continue
+			return typ.inherits(type)
+		return False
+	def __repr__(self) -> str:
+		return self.name
+
+	"""
+ 	@Non-Mutating
+  	Returns the value obtained from the data or default if None
+ 	"""
+	def get(self, key, default = None)->Any:
+		return self.data[key] if key in self.data else default
+	"""
+ 	@Mutating
+  	Inserts the value in the data at the key
+ 	"""
+	def set(self, key, value):
+		self.data[key] = value
+	"""
+ 	@Mutating
+  	Sets the value at key if empty and returns the value obtained
+ 	"""
+	def attr(self, key, default)->Any:
+		return self.data.setdefault(key, default)
+
+class LiteralType(Type):
+	pass
+
+Object = Type("builtins.Object")
+{
+	"init": [{
+		"args": {},
+		"return": Object,
+		"": "",
+	},],
+}
+#Any = Type("builtins.Any")
+Protocol = Type("builtins.Protocol")
+Function = Type("builtins.Function")
+IntegerLiteral = LiteralType("builtins.IntegerLiteral")
+Integer = Type("builtins.Integer")
+Integer.inheritance(Object)
+StringLiteral = LiteralType("builtins.StringLiteral")
+String = Type("builtins.String")
+String.inheritance(Object)
+Void = Type("builtins.Void")
+Nil = Type("builtins.Nil")
+Nil.inheritance(Object)
+
+class Instance:
+	def __init__(self, type: Type):
+		self.__type__ = type
+		self.static = type.getstatics()
+		#self.
+	
+
+
+
+"""class BuiltinFunction:
+	def __init__(self, args: Dict[str, Type] = {}, returns: Type = Void):
+		self.__args__ = args
+		self.__returns__ = returns
+		self.body = {}
+	def set(self, body: callable):
+		self.body = body
+	def args(self, *args: Dict[str, Instance]):
+		pass"""
+
+"""
+Object().toString() -> String
+Object().copy() -> Self
+Object.equals(other: Object) -> Boolean
+Object.self -> <Self type>
+Object.Type -> Self
+"""
+
+"""
+type in scope: Nil
+lookup location: Object.self
+"""
+
+print(Object.__inherits__, Nil.__inherits__)
+print(Object.inherits(Nil))
+print(Object.inherits(Any))
+print(GLOBALTYPES)
+

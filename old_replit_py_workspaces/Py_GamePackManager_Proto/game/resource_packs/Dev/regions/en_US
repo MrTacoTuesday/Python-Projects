@@ -1,0 +1,7 @@
+attribute.affinity.earth.name = Earth Magic Affinity
+#attribute.affinity.water.name = Water Magic Affinity
+
+
+attribute.common.dexterity.name = Dexterity
+
+death.player.generic = "{0} died"

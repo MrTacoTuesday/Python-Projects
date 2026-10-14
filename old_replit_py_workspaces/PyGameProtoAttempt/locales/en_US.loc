@@ -1,0 +1,21 @@
+loc.name=American English
+
+tool.type.0=Bladed
+tool.type.1=Ranged
+tool.type.2=Magical
+tool.type.3
+
+
+tool.rank.-3=Broken
+tool.rank.-2=Sealed
+tool.rank.-1=Lesser
+
+tool.rank.0=Basic
+
+tool.rank.1=Greater
+tool.rank.2=Unique
+tool.rank.3=Mythic
+
+tile.sand=Sand
+
+object.grass=Grass

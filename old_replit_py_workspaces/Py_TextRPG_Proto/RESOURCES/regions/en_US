@@ -1,0 +1,25 @@
+race.human.name = Human
+race.human.tribal.name = Tribal Human
+race.human.mystic.name = Mystic Human
+
+race.celestial.name = Celestial
+
+race.elf.name = Elf
+race.elf.dark.name = Dark Elf
+race.elf.high.name = High Elf
+
+race.dwarf.name = Dwarf
+
+race.orc.name = Orc
+
+race.ogre.name = Ogre
+
+race.demon.name = Demon
+
+race.flora.name = Plant
+
+race.fauna.name = Creature
+
+gender.male.name = Male
+gender.female.name = Female
+gender.androgynous.name = None
